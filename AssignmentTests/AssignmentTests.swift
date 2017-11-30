@@ -38,7 +38,6 @@ class AssignmentTests: XCTestCase {
     // TEST Cases
     
     func testValidAPI() {
-        
         // For success used -->PABaseUrl
         let  baseURL  = "https://dl.dropboxuserconte ntww.com/s/2iodh4vg0eortkl/facts.json"
             // For Failed used -->baseURL
@@ -55,21 +54,18 @@ class AssignmentTests: XCTestCase {
             //handle error here....
             XCTFail()
         }
-
     }
+    
     func testValidAPIAsyn(){
            let readyExpectation = expectation(description: "ready")
-        
         
        // let  baseURL  = "https://dl.dropboxusercontent.com/s/2iodh4vg0eortkl/ facts. json"
         Service.sharedInstance.FetchAllFeeds(requestFor:PABaseUrl, completionBlockSuccess: { (result) in
             //API Respond Scuess
             readyExpectation.fulfill()
-                   })
-        { (error) in
+       }){ (error) in
           XCTFail()
         }
-        
         // Loop until the expectation is fulfilled //Change timeOut value like  1,2,3... give error .. 5 sec got sucess
         self.waitForExpectations(timeout: 1, handler: { errorMessage in
             XCTAssertNil(errorMessage, "Error")

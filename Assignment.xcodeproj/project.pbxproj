@@ -76,6 +76,7 @@
 				43D2ABCC1FCE79DC007DC7A2 /* Products */,
 			);
 			sourceTree = "<group>";
+			wrapsLines = 0;
 		};
 		43D2ABCC1FCE79DC007DC7A2 /* Products */ = {
 			isa = PBXGroup;

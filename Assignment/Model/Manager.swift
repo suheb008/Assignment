@@ -10,15 +10,12 @@ import Foundation
 
 struct Service {
     
-    
     static let sharedInstance = Service()
      typealias JSONDictionary = [String: Any]
     
 //Pull All feeds
 func FetchAllFeeds(requestFor:String, completionBlockSuccess successBlock: @escaping ((_ responce:Dictionary<AnyHashable, Any>) -> Void), andFailureBlock failBlock: @escaping ((_ _errorResponce:AnyObject) -> Void)) {
    
-    
-
     // Create NSURL Ibject
     let myUrl = NSURL(string: requestFor);
     if(myUrl == nil) {
@@ -34,7 +31,7 @@ func FetchAllFeeds(requestFor:String, completionBlockSuccess successBlock: @esca
     // Set request HTTP method to GET. It could be POST as well
     request.httpMethod = "GET"
     request.setValue("application/json", forHTTPHeaderField: "Accept")
-     request.setValue("ext/plain", forHTTPHeaderField: "Content-Type")
+    request.setValue("ext/plain", forHTTPHeaderField: "Content-Type")
     
      // Excute HTTP Request
     let task = URLSession.shared.dataTask(with: request as URLRequest) {
@@ -55,8 +52,6 @@ func FetchAllFeeds(requestFor:String, completionBlockSuccess successBlock: @esca
             if(httpResponse.statusCode==200)
             {
                 //Convert data into Json
-
-                
                     do {
                                 
                     let requestReply: String = NSString(data: data!, encoding: String.Encoding.ascii.rawValue) as! String
@@ -108,8 +103,6 @@ func FetchAllFeeds(requestFor:String, completionBlockSuccess successBlock: @esca
                 
             }
              title = providedResult["title"] as! String
-            
-            
             return (result,title)
         }
          else {

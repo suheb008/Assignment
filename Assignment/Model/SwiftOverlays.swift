@@ -481,7 +481,6 @@ open class SwiftOverlays: NSObject {
     }
     
     // MARK: - Private class methods -
-    
     fileprivate class func labelForText(_ text: String) -> UILabel {
         let textSize = text.size(attributes: [NSFontAttributeName: font])
         
