@@ -23,6 +23,9 @@ class FeedController: UITableViewController {
     var task: URLSessionDownloadTask!
     var session: URLSession!
     
+    private var tblListWithCaanadaInfo = UITableView()
+
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -32,6 +35,16 @@ class FeedController: UITableViewController {
          self.showWaitOverlayWithText("Feed searching....")
         APIcall()
     }
+    
+//    func codeForTable(){
+//     //   tableView.dataSource = table
+//      //  tableView.delegate = table
+//        self.view = UITableView(frame: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height))
+//        self.view.register(UITableViewCell.self, forCellReuseIdentifier: "FeedCell")
+//        self.view.dataSource = self
+//        self.view.delegate = self
+//        self.view.addSubview(tableView)
+//    }
     
     //Refresh Controller setup
     func refreshInit(){
