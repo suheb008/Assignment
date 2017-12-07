@@ -10,8 +10,7 @@ import UIKit
 
 class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSource {
     
-    private let myArray: NSArray = ["First","Second","Third"]
-    private var myTableView: UITableView!
+    private var contryDetailsTableView: UITableView!
     
     var feedArray = Array<Any>()
     
@@ -20,12 +19,10 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     
     //refresh data
     var refreshCtrl: UIRefreshControl!
-    //save image in cache..
     var cache:NSCache<AnyObject,AnyObject>!
     
     var task: URLSessionDownloadTask!
     var session: URLSession!
-    
     
     
     override func viewDidLoad() {
@@ -36,11 +33,11 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         let displayWidth: CGFloat = self.view.frame.width
         let displayHeight: CGFloat = self.view.frame.height
         
-        myTableView = UITableView(frame: CGRect(x: 0, y: barHeight, width: displayWidth, height: displayHeight - barHeight))
-        myTableView.register(UITableViewCell.self, forCellReuseIdentifier: "feedCell")
-        myTableView.dataSource = self
-        myTableView.delegate = self
-        self.view.addSubview(myTableView)
+        contryDetailsTableView = UITableView(frame: CGRect(x: 0, y: barHeight, width: displayWidth, height: displayHeight - barHeight))
+        contryDetailsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "feedCell")
+        contryDetailsTableView.dataSource = self
+        contryDetailsTableView.delegate = self
+        self.view.addSubview(contryDetailsTableView)
         
         session = URLSession.shared
         task = URLSessionDownloadTask()
@@ -54,17 +51,15 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        
-        myTableView.register(FeedCell.self, forCellReuseIdentifier: "FeedCell")
-        
+        contryDetailsTableView.register(FeedCell.self, forCellReuseIdentifier: "FeedCell")
     }
     
     
     func refreshInit(){
         
         self.refreshCtrl = UIRefreshControl()
-        self.refreshCtrl.addTarget(self, action: #selector(FeedController.refreshTableView), for: .valueChanged)
-        self.myTableView.refreshControl = self.refreshCtrl
+        self.refreshCtrl.addTarget(self, action: #selector(ViewController.refreshTableView), for: .valueChanged)
+        self.contryDetailsTableView.refreshControl = self.refreshCtrl
         
         self.cache = NSCache()
     }
@@ -79,21 +74,23 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         
         Service.sharedInstance.FetchAllFeeds(requestFor:PABaseUrl, completionBlockSuccess: { (result) in
             self.removeAllOverlays()
+            
             //Serilazation reponce into model format
             let tupleResult = Service.sharedInstance.feedResult(providedResult: result)
             
             weakRef?.feedArray = tupleResult.0!
+           
             //If result found then display on table view
             if( (weakRef?.feedArray.count)! > 0){
                 DispatchQueue.main.async {
-                    weakRef?.title = tupleResult.1 //Set title on Navigation Bar
-                    weakRef?.myTableView.reloadData()
+                    weakRef?.title = tupleResult.1
+                    weakRef?.contryDetailsTableView.reloadData()
                     weakRef?.refreshCtrl?.endRefreshing()
                 }
             }
             
         }) { (error) in
-            //handle error here....
+
             self.removeAllOverlays()
             DispatchQueue.main.async {
                 
@@ -105,6 +102,36 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
         return feedArray.count
     }
     
+    fileprivate func contryInfoImage(_ feed: Feed, _ cell: FeedCell, _ tableView: UITableView, _ indexPath: IndexPath) {
+        if (self.cache.object(forKey: feed.profileURL as AnyObject) != nil) {
+            // Use cache
+            let profileImage = UIImageView()
+            profileImage.frame = CGRect.init(x: 9, y: 5, width: 80, height: 80)
+            profileImage.image = self.cache.object(forKey: feed.profileURL as AnyObject) as? UIImage
+            cell .addSubview(profileImage)
+            
+        }else{
+            
+            let artworkUrl = feed.profileURL
+            let url:URL! = URL(string: artworkUrl)
+            task = session.downloadTask(with: url, completionHandler: { (location, response, error) -> Void in
+                if let data = try? Data(contentsOf: url){
+                    
+                    DispatchQueue.main.async(execute: { () -> Void in
+                        // Before we assign the image, check whether the current cell is visible
+                        if let updateCell :FeedCell = tableView.cellForRow(at: indexPath) as?FeedCell {
+                            let img:UIImage! = UIImage(data: data)
+                            updateCell.profilePic?.image = img
+                            
+                            self.cache.setObject(img, forKey:feed.profileURL as AnyObject)
+                        }
+                    })
+                }
+            })
+            task.resume()
+        }
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell : FeedCell = tableView.dequeueReusableCell(withIdentifier: "FeedCell", for: indexPath) as! FeedCell
@@ -113,50 +140,14 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
             
             let feed :Feed = feedArray[indexPath.row] as! Feed
             
-                        let titleLabel = UILabel()
-                        titleLabel.frame = CGRect.init(x: 93, y: 9, width: 260 , height: 26)
-                        titleLabel.text = feed.feedTitle
-                        cell.addSubview(titleLabel)
             
-                        let descriptionLabel = UILabel()
-                        descriptionLabel.frame = CGRect.init(x: 96, y: 36, width: 257 , height: 44)
-                        descriptionLabel.text = feed.description
-                        descriptionLabel.lineBreakMode = NSLineBreakMode.byWordWrapping
-                        descriptionLabel.numberOfLines = 0
-                        descriptionLabel.sizeToFit()
-                        cell.addSubview(descriptionLabel)
-              //cell.descriptionView.frame = CGRect.init(x: 96, y: 36, width: 236, height: 44)
-            
-            cell.cellConfigration(feed: feed)
-            
-            if (self.cache.object(forKey: feed.profileURL as AnyObject) != nil){
-                
-                // Use cache
-                let profileImage = UIImageView()
-                profileImage.frame = CGRect.init(x: 9, y: 5, width: 80, height: 80)
-                profileImage.image = self.cache.object(forKey: feed.profileURL as AnyObject) as? UIImage
-                cell .addSubview(profileImage)
-                
-            }else{
-                
-                let artworkUrl = feed.profileURL
-                let url:URL! = URL(string: artworkUrl)
-                task = session.downloadTask(with: url, completionHandler: { (location, response, error) -> Void in
-                    if let data = try? Data(contentsOf: url){
-                        
-                        DispatchQueue.main.async(execute: { () -> Void in
-                            // Before we assign the image, check whether the current cell is visible
-                            if let updateCell :FeedCell = tableView.cellForRow(at: indexPath) as?FeedCell {
-                                let img:UIImage! = UIImage(data: data)
-                                updateCell.profilePic?.image = img
-                                
-                                self.cache.setObject(img, forKey:feed.profileURL as AnyObject)
-                            }
-                        })
-                    }
-                })
-                task.resume()
+            let labels = cell.subviews.flatMap { $0 as? UILabel }
+            for label in labels {
+                label.removeFromSuperview()
             }
+          
+            cell.cellConfigration(feed: feed)
+            contryInfoImage(feed, cell, tableView, indexPath)
             
             return cell
         }else {
@@ -169,7 +160,6 @@ class ViewController: UIViewController, UITableViewDelegate,UITableViewDataSourc
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        
         let feed:Feed = feedArray[indexPath.row] as! Feed
         let frameS :CGRect = dynamicTextHeight(text: feed.description, font: UIFont.systemFont(ofSize: 16), width: Double(screenWidth-100))
         
